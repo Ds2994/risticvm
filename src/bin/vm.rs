@@ -4,6 +4,11 @@ use std::path::Path;
 use std::io::{BufReader, Read};
 use rusticvm::{Machine, Register};
 
+pub fn signal_halt(vm: &mut Machine) -> Result<(), String> {
+    vm.halt = true;
+    return Ok(());
+}
+
 pub fn main() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
     
@@ -19,12 +24,12 @@ pub fn main() -> Result<(), String> {
     reader.read_to_end(&mut program).map_err(|err| format!("failed to read file: {}", err))?;
 
     let mut vm = Machine::new();
+    vm.define_handler(0xF0, signal_halt);
     vm.memory.load_from_vec(&program, 0);
-    vm.step()?;
-    vm.step()?;
-    vm.step()?;
-    vm.step()?;
-
+    
+    while !vm.halt {
+        vm.step()?;
+    }
     println!("A = {}", vm.get_register(Register::A));
     Ok(())
 }
