@@ -39,23 +39,37 @@ fn handle_line(parts: Vec<&str>) -> Result<Instruction, String> {
     let opcode = OpCode::from_str(parts[0]).ok_or(format!("unkown opcode: {}", parts[0]))?;
 
     match opcode {
+        OpCode::Nop => {
+            assert_length(&parts, 1)?;
+            return Ok(Instruction::Nop);
+        },
         OpCode::Push => {
             assert_length(&parts, 2)?;
-            Ok(Instruction::Push(parse_numeric(parts[1])?))
+            return Ok(Instruction::Push(parse_numeric(parts[1])?));
         },
         OpCode::AddStack => {
             assert_length(&parts, 1)?;
-            Ok(Instruction::AddStack)
+            return Ok(Instruction::AddStack);
         },
         OpCode::PopRegister => {
             assert_length(&parts, 2)?;
-            Ok(Instruction::PopRegister(parse_register(parts[1])?))
-        }
+            return Ok(Instruction::PopRegister(parse_register(parts[1])?));
+        },
+        OpCode::PushRegister => {
+            assert_length(&parts, 2)?;
+            return Ok(Instruction::PushRegister(parse_register(parts[1])?));
+        },
         OpCode::Signal => {
             assert_length(&parts, 2)?;
-            Ok(Instruction::Signal(parse_numeric(parts[1])?))
+            return Ok(Instruction::Signal(parse_numeric(parts[1])?));
+        },
+        OpCode::AddRegister => {
+            assert_length(&parts, 3)?;
+            return Ok(Instruction::AddRegister(
+                parse_register(parts[1])?,
+                parse_register(parts[2])?
+            ));
         }
-        _ => Err(format!("un-implemented opcode: {:?}", opcode))
     }
 }
 

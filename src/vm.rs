@@ -21,6 +21,12 @@ fn parse_instruction(ins: u16) -> Result<Instruction, String> {
                 .ok_or(format!("unkown register 0x{:X}", reg))
                 .map(|r| Instruction::PopRegister(r));
         },
+        OpCode::PushRegister => {
+            let reg = (ins & 0xf00) >> 8;
+            return Register::from_u8(reg as u8)
+                .ok_or(format!("unkown register 0x{:X}", reg))
+                .map(|r| Instruction::PushRegister(r));
+        },
         OpCode::AddStack => {
             return Ok(Instruction::AddStack);
         },
@@ -59,8 +65,28 @@ impl Machine {
         }
     }
 
+    pub fn state(&self) -> String {
+        format!("A: {} | B: {} | C: {} | M: {} 
+SP: {} | PC: {} | BP: {} 
+FLAGS: {:X}
+        ",
+                self.get_register(Register::A),
+                self.get_register(Register::B),
+                self.get_register(Register::C),
+                self.get_register(Register::M),
+                self.get_register(Register::SP),
+                self.get_register(Register::PC),
+                self.get_register(Register::BP),
+                self.get_register(Register::FLAGS),
+        )
+    }
+
     pub fn get_register(&self, r: Register) -> u16 {
         return self.registers[r as usize];
+    }
+
+    pub fn set_register(&mut self, r: Register, v: u16) {
+        self.registers[r as usize] = v;
     }
 
     pub fn define_handler(&mut self, index: u8, func: SignalFunction) {
@@ -100,6 +126,10 @@ impl Machine {
             Instruction::PopRegister(reg) => {
                 let value = self.pop()?;
                 self.registers[reg as usize] = value;
+                Ok(())
+            },
+            Instruction::PushRegister(reg) => {
+                self.push(self.registers[reg as usize])?;
                 Ok(())
             },
             Instruction::AddStack => {
